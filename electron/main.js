@@ -24,7 +24,7 @@ function loadSaved() {
 }
 function saveTorrents() {
   if (!client) return;
-  const data = client.torrents.map(t => ({ magnetURI: t.magnetURI, savePath: t.path, done: t.done }));
+  const data = client.torrents.map(t => ({ magnetURI: t.magnetURI, savePath: t.path, done: t.done, paused: !!t.paused }));
   try { fs.writeFileSync(dataFile(), JSON.stringify(data)); } catch {}
 }
 
@@ -109,10 +109,8 @@ async function initClient() {
 
   for (const item of loadSaved()) {
     try {
-      client.add(item.magnetURI, { path: item.savePath || settings.downloadPath }, (torrent) => {
-        setupTorrent(torrent);
-        if (item.paused) torrent.pause();
-      });
+      const t = client.add(item.magnetURI, { path: item.savePath || settings.downloadPath }, setupTorrent);
+      t.pause();
     } catch {}
   }
 

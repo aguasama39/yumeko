@@ -1,6 +1,6 @@
 {
   "name": "yumeko",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Desktop BitTorrent client",
   "main": "electron/main.js",
   "scripts": {

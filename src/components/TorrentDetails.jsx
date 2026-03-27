@@ -37,7 +37,7 @@ export default function TorrentDetails({ torrent: t, onRemove, onPause, onResume
           <div className="details-actions">
             {t.paused
               ? <button className="action-btn" onClick={onResume}>▶ Resume</button>
-              : <button className="action-btn" onClick={onPause} disabled={t.done}>⏸ Pause</button>
+              : <button className="action-btn" onClick={onPause}>⏸ Pause</button>
             }
             <button className="action-btn danger" onClick={() => setConfirmRemove(true)}>Remove</button>
           </div>
