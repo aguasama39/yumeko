@@ -11,6 +11,10 @@ const clientReady = initClient();
 const dataFile = () => path.join(app.getPath('userData'), 'torrents.json');
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
 
+// Cache of known metadata keyed by infoHash, used as fallback when a torrent
+// is paused before WebTorrent has re-fetched its metadata (e.g. after restart).
+const torrentCache = {};
+
 function loadSettings() {
   try { return JSON.parse(fs.readFileSync(settingsFile(), 'utf8')); }
   catch { return { downloadPath: app.getPath('downloads'), stopSeedingWhenDone: false }; }
@@ -24,14 +28,47 @@ function loadSaved() {
 }
 function saveTorrents() {
   if (!client) return;
-  const data = client.torrents.map(t => ({ magnetURI: t.magnetURI, savePath: t.path, done: t.done, paused: !!t.paused }));
+  const data = client.torrents.map(t => {
+    const cache = torrentCache[t.infoHash] || {};
+    return {
+      magnetURI: t.magnetURI,
+      savePath: t.path,
+      done: t.done || cache.done || false,
+      paused: !!t.paused,
+      // Persist metadata so it survives restart while paused
+      progress: t.length > 0 ? t.progress : (cache.progress || 0),
+      length: t.length || cache.length || 0,
+      files: t.files && t.files.length > 0
+        ? t.files.map(f => ({ name: f.name, path: f.path, length: f.length, progress: f.progress || 0 }))
+        : (cache.files || []),
+    };
+  });
   try { fs.writeFileSync(dataFile(), JSON.stringify(data)); } catch {}
 }
 
 // ── WebTorrent ────────────────────────────────────────────────────────────────
 
 function torrentToData(t) {
-  const files = t.files || [];
+  const liveFiles = t.files && t.files.length > 0 ? t.files : null;
+  const cache = torrentCache[t.infoHash] || {};
+
+  // Update cache whenever we have real metadata from WebTorrent
+  if (t.length > 0) {
+    torrentCache[t.infoHash] = {
+      progress: t.progress,
+      length: t.length,
+      done: t.done,
+      files: (t.files || []).map(f => ({ name: f.name, path: f.path, length: f.length, progress: f.progress || 0 })),
+    };
+  }
+
+  const length = t.length || cache.length || 0;
+  const progress = t.length > 0 ? t.progress : (cache.progress || 0);
+  const done = t.done || cache.done || false;
+  const files = liveFiles
+    ? liveFiles.map(f => ({ name: f.name, path: f.path, length: f.length, progress: f.progress || 0 }))
+    : (cache.files || []);
+
   // Compute the folder that contains all this torrent's files
   const savePath = files.length > 0
     ? path.dirname(files[0].path)
@@ -41,24 +78,19 @@ function torrentToData(t) {
     infoHash: t.infoHash,
     name: t.name || 'Fetching metadata...',
     magnetURI: t.magnetURI || '',
-    progress: t.progress || 0,
+    progress,
     downloadSpeed: t.downloadSpeed || 0,
     uploadSpeed: t.uploadSpeed || 0,
     downloaded: t.downloaded || 0,
     uploaded: t.uploaded || 0,
-    length: t.length || 0,
+    length,
     numPeers: t.numPeers || 0,
-    done: t.done || false,
+    done,
     paused: !!t.paused,
     timeRemaining: t.timeRemaining ?? Infinity,
     ratio: t.ratio || 0,
     savePath,
-    files: files.map(f => ({
-      name: f.name,
-      path: f.path,
-      length: f.length,
-      progress: f.progress || 0,
-    })),
+    files,
   };
 }
 
@@ -109,6 +141,18 @@ async function initClient() {
 
   for (const item of loadSaved()) {
     try {
+      // Pre-populate cache from saved data using infoHash extracted from magnet URI
+      if (item.magnetURI && (item.length || item.progress || (item.files && item.files.length))) {
+        const match = item.magnetURI.match(/xt=urn:btih:([a-fA-F0-9]{40}|[a-zA-Z2-7]{32})/i);
+        if (match) {
+          torrentCache[match[1].toLowerCase()] = {
+            progress: item.progress || 0,
+            length: item.length || 0,
+            done: item.done || false,
+            files: item.files || [],
+          };
+        }
+      }
       const t = client.add(item.magnetURI, { path: item.savePath || settings.downloadPath }, setupTorrent);
       t.pause();
     } catch {}
