@@ -1,5 +1,5 @@
 {
-  "name": "torrent-client",
+  "name": "yumeko",
   "version": "1.0.0",
   "description": "Desktop BitTorrent client",
   "main": "electron/main.js",
