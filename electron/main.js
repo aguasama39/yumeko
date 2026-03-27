@@ -109,8 +109,10 @@ async function initClient() {
 
   for (const item of loadSaved()) {
     try {
-      const t = client.add(item.magnetURI, { path: item.savePath || settings.downloadPath }, setupTorrent);
-      if (item.paused) t.pause();
+      client.add(item.magnetURI, { path: item.savePath || settings.downloadPath }, (torrent) => {
+        setupTorrent(torrent);
+        if (item.paused) torrent.pause();
+      });
     } catch {}
   }
 
