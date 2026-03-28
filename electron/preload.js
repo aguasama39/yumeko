@@ -7,7 +7,6 @@ contextBridge.exposeInMainWorld('api', {
   remove: (hash, del) => ipcRenderer.invoke('torrent:remove', hash, del),
   pause: (hash) => ipcRenderer.invoke('torrent:pause', hash),
   resume: (hash) => ipcRenderer.invoke('torrent:resume', hash),
-  setSequential: (hash, enabled) => ipcRenderer.invoke('torrent:set-sequential', hash, enabled),
   openFile: (p) => ipcRenderer.invoke('torrent:open-file', p),
   openFolder: (p) => ipcRenderer.invoke('torrent:open-folder', p),
   getSettings: () => ipcRenderer.invoke('torrent:get-settings'),

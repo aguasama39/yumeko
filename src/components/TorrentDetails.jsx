@@ -8,7 +8,7 @@ const STATUS_LABEL = {
   connecting: 'Connecting',
 };
 
-export default function TorrentDetails({ torrent: t, onRemove, onPause, onResume, onSetSequential }) {
+export default function TorrentDetails({ torrent: t, onRemove, onPause, onResume }) {
   const [tab, setTab] = useState('files');
   const [confirmRemove, setConfirmRemove] = useState(false);
 
@@ -35,15 +35,6 @@ export default function TorrentDetails({ torrent: t, onRemove, onPause, onResume
         <div className="details-title-row">
           <h2 className="details-name" title={t.name}>{t.name}</h2>
           <div className="details-actions">
-            {!t.done && (
-              <button
-                className={`action-btn${t.sequential ? ' sequential-active' : ''}`}
-                onClick={() => onSetSequential(!t.sequential)}
-                title="Download files in order from start to finish"
-              >
-                ⇣ Sequential
-              </button>
-            )}
             {t.paused
               ? <button className="action-btn" onClick={onResume}>▶ Resume</button>
               : <button className="action-btn" onClick={onPause}>⏸ Pause</button>

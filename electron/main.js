@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog, shell, Notification } = require('el
 const path = require('path');
 const fs = require('fs');
 
+app.setAppUserModelId('com.torrent.app');
+
 let mainWindow;
 let client = null;
 const clientReady = initClient();
@@ -34,7 +36,6 @@ function saveTorrents() {
       magnetURI: t.magnetURI,
       savePath: t.path,
       done: t.done || cache.done || false,
-      sequential: cache.sequential || false,
       paused: !!t.paused,
       // Persist metadata so it survives restart while paused
       progress: t.length > 0 ? t.progress : (cache.progress || 0),
@@ -66,7 +67,6 @@ function torrentToData(t) {
   const length = t.length || cache.length || 0;
   const progress = t.length > 0 ? t.progress : (cache.progress || 0);
   const done = t.done || cache.done || false;
-  const sequential = cache.sequential || false;
   const files = liveFiles
     ? liveFiles.map(f => ({ name: f.name, path: f.path, length: f.length, progress: f.progress || 0 }))
     : (cache.files || []);
@@ -88,7 +88,6 @@ function torrentToData(t) {
     length,
     numPeers: t.numPeers || 0,
     done,
-    sequential,
     paused: !!t.paused,
     timeRemaining: t.timeRemaining ?? Infinity,
     ratio: t.ratio || 0,
@@ -119,18 +118,6 @@ function ensureSubfolder(torrent, downloadPath) {
 
 function sanitizeName(name) {
   return name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').trim() || 'torrent';
-}
-
-function applySequential(torrent) {
-  const total = torrent.pieces.length;
-  if (!total) return;
-  const buckets = Math.min(10, total);
-  const chunkSize = Math.ceil(total / buckets);
-  for (let i = 0; i < buckets; i++) {
-    const start = i * chunkSize;
-    const end = Math.min((i + 1) * chunkSize - 1, total - 1);
-    torrent.select(start, end, buckets - i);
-  }
 }
 
 function setupTorrent(torrent) {
@@ -171,7 +158,6 @@ async function initClient() {
             progress: item.progress || 0,
             length: item.length || 0,
             done: item.done || false,
-            sequential: item.sequential || false,
             files: item.files || [],
           };
         }
@@ -289,21 +275,9 @@ ipcMain.handle('torrent:resume', async (_e, infoHash) => {
   const t = client.torrents.find(x => x.infoHash === infoHash);
   if (!t) return;
   t.resume();
-  const cache = torrentCache[infoHash] || {};
-  if (cache.sequential) applySequential(t);
   if (mainWindow) mainWindow.webContents.send('torrents:update', client.torrents.map(torrentToData));
 });
 
-ipcMain.handle('torrent:set-sequential', async (_e, infoHash, enabled) => {
-  await clientReady;
-  const t = client.torrents.find(x => x.infoHash === infoHash);
-  if (!t) return;
-  if (!torrentCache[infoHash]) torrentCache[infoHash] = {};
-  torrentCache[infoHash].sequential = enabled;
-  if (enabled && !t.paused) applySequential(t);
-  saveTorrents();
-  if (mainWindow) mainWindow.webContents.send('torrents:update', client.torrents.map(torrentToData));
-});
 
 ipcMain.handle('torrent:open-file', (_e, filePath) => shell.openPath(filePath));
 ipcMain.handle('torrent:open-folder', (_e, filePath) => shell.showItemInFolder(filePath));

@@ -164,9 +164,6 @@ html, body, #root { height: 100%; background: var(--bg); color: var(--text); fon
 .action-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
 .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .action-btn.danger:hover { background: var(--danger-dim); color: var(--danger); border-color: var(--danger); }
-.action-btn.sequential-active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
-.action-btn.sequential-active:hover { background: var(--accent-glow); }
-
 .status-badge {
   display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 10px; font-weight: 500;
 }

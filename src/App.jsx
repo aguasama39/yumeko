@@ -56,10 +56,6 @@ export default function App() {
     }
   }
 
-  function handleSetSequential(infoHash, enabled) {
-    window.api.setSequential(infoHash, enabled);
-  }
-
   async function handleRemove(infoHash, deleteFiles) {
     await window.api.remove(infoHash, deleteFiles);
     setTorrents(prev => {
@@ -92,7 +88,6 @@ export default function App() {
           onRemove={handleRemove}
           onPause={() => window.api.pause(selected?.infoHash)}
           onResume={() => window.api.resume(selected?.infoHash)}
-          onSetSequential={(enabled) => handleSetSequential(selected?.infoHash, enabled)}
         />
       </div>
 
