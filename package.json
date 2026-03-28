@@ -1,6 +1,6 @@
 {
   "name": "yumeko",
-  "version": "1.0.5",
+  "version": "1.0.8",
   "description": "Desktop BitTorrent client",
   "main": "electron/main.js",
   "scripts": {
@@ -26,7 +26,7 @@
     "appId": "com.torrent.app",
     "productName": "Yumeko",
     "directories": { "output": "dist" },
-    "files": ["electron/**/*", "dist-react/**/*", "node_modules/**/*"],
+    "files": ["electron/**/*", "dist-react/**/*", "assets/**/*", "node_modules/**/*"],
     "asarUnpack": ["node_modules/**/*.node"],
     "npmRebuild": false,
     "win": {

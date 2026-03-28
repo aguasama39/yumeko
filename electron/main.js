@@ -1,6 +1,8 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, Notification } = require('electron');
 const path = require('path');
 const fs = require('fs');
+
+app.setAppUserModelId('Yumeko');
 
 let mainWindow;
 let client = null;
@@ -122,6 +124,9 @@ function setupTorrent(torrent) {
   torrent.on('done', () => {
     saveTorrents();
     if (mainWindow) mainWindow.webContents.send('torrent:done', torrentToData(torrent));
+    if (Notification.isSupported()) {
+      new Notification({ title: 'Yumeko - A BitTorrent Client', body: `Finished: ${torrent.name}`, icon: path.join(__dirname, '..', 'assets', 'icon.ico') }).show();
+    }
     const settings = loadSettings();
     if (settings.stopSeedingWhenDone) {
       torrent.pause();
