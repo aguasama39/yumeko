@@ -35,6 +35,7 @@
     },
     "linux": {
       "target": [{ "target": "AppImage", "arch": ["x64"] }],
+      "icon": "assets/icon.png",
       "category": "Network"
     }
   }
