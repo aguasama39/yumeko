@@ -1,0 +1,42 @@
+# Maintainer: your name <your@email.com>
+pkgname=yumeko-torrent-bin
+pkgver=1.0.8
+pkgrel=1
+pkgdesc="A clean dark-themed desktop BitTorrent client"
+arch=('x86_64')
+url="https://github.com/aguasama39/yumeko"
+license=('MIT')
+depends=('fuse2' 'libnotify' 'nss' 'libxss' 'libxtst')
+options=('!strip')
+source=(
+    "Yumeko-${pkgver}.AppImage::https://github.com/aguasama39/yumeko/releases/download/v${pkgver}/Yumeko-${pkgver}.AppImage"
+    "yumeko.desktop"
+)
+sha256sums=('SKIP' 'SKIP')
+
+prepare() {
+    chmod +x "Yumeko-${pkgver}.AppImage"
+    "./Yumeko-${pkgver}.AppImage" --appimage-extract
+}
+
+package() {
+    # Install app files
+    install -d "${pkgdir}/opt/yumeko"
+    cp -r squashfs-root/* "${pkgdir}/opt/yumeko/"
+
+    # Wrapper script
+    install -d "${pkgdir}/usr/bin"
+    cat > "${pkgdir}/usr/bin/yumeko" <<'EOF'
+#!/bin/sh
+exec /opt/yumeko/Yumeko "$@"
+EOF
+    chmod +x "${pkgdir}/usr/bin/yumeko"
+
+    # Icon
+    install -Dm644 squashfs-root/.DirIcon \
+        "${pkgdir}/usr/share/icons/hicolor/512x512/apps/yumeko.png"
+
+    # Desktop entry
+    install -Dm644 "${srcdir}/yumeko.desktop" \
+        "${pkgdir}/usr/share/applications/yumeko.desktop"
+}

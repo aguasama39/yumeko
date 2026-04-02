@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Yumeko
+Comment=A clean dark-themed desktop BitTorrent client
+Exec=yumeko %U
+Icon=yumeko
+Type=Application
+Categories=Network;FileTransfer;P2P;
+MimeType=application/x-bittorrent;x-scheme-handler/magnet;
+StartupWMClass=Yumeko
